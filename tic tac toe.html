@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 3em;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #333;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cell:hover {
+            background-color: #eee;
+        }
+        .crossed {
+            text-decoration: line-through;
+            color: #f00;
+        }
+    </style>
+</head>
+<body>
+    <div id="board"></div>
+
+    <script>
+        const HUMAN = 'X';
+        const AI = 'O';
+        let currentPlayer = HUMAN;
+        let board = ['', '', '', '', '', '', '', '', ''];
+        const boardElement = document.getElementById('board');
+
+        // Create the Tic-Tac-Toe board
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.setAttribute('data-index', i);
+            cell.addEventListener('click', handleCellClick);
+            boardElement.appendChild(cell);
+        }
+
+        // Handle cell click
+        function handleCellClick(event) {
+            const index = event.target.getAttribute('data-index');
+            if (board[index] === '' && currentPlayer === HUMAN) {
+                board[index] = HUMAN;
+                event.target.textContent = HUMAN;
+                currentPlayer = AI;
+                checkGameStatus();
+                setTimeout(makeAIMove, 500);
+            }
+        }
+
+        // Make AI move using Minimax algorithm
+        function makeAIMove() {
+            const bestMove = getBestMove();
+            board[bestMove.index] = AI;
+            document.querySelector(`[data-index="${bestMove.index}"]`).textContent = AI;
+            currentPlayer = HUMAN;
+            checkGameStatus();
+        }
+
+        // Check game status
+        function checkGameStatus() {
+            if (checkWinner(HUMAN)) {
+                alert('You win!');
+                resetGame();
+            } else if (checkWinner(AI)) {
+                alert('AI wins!');
+                resetGame();
+            } else if (isBoardFull()) {
+                alert("It's a draw!");
+                resetGame();
+            }
+        }
+
+        // Reset the game
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = HUMAN;
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('crossed');
+            });
+        }
+
+        // Check if a player has won
+        function checkWinner(player) {
+            const winningCombinations = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
+
+            for (const combination of winningCombinations) {
+                const [a, b, c] = combination;
+                if (board[a] === player && board[b] === player && board[c] === player) {
+                    // Mark the winning combination
+                    document.querySelector(`[data-index="${a}"]`).classList.add('crossed');
+                    document.querySelector(`[data-index="${b}"]`).classList.add('crossed');
+                    document.querySelector(`[data-index="${c}"]`).classList.add('crossed');
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Check if the board is full
+        function isBoardFull() {
+            return board.every(cell => cell !== '');
+        }
+
+        // Get the best move for the AI using the Minimax algorithm
+        function getBestMove() {
+            let bestScore = -Infinity;
+            let bestMove;
+
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = AI;
+                    let score = minimax(board, 0, false);
+                    board[i] = '';
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = { index: i };
+                    }
+                }
+            }
+
+            return bestMove;
+        }
+
+        // Minimax algorithm for optimal move
+        function minimax(board, depth, maximizingPlayer) {
+            if (checkWinner(HUMAN)) {
+                return -1;
+            } else if (checkWinner(AI)) {
+                return 1;
+            } else if (isBoardFull()) {
+                return 0;
+            }
+
+            if (maximizingPlayer) {
+                let maxEval = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = AI;
+                        let eval = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        maxEval = Math.max(maxEval, eval);
+                    }
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = HUMAN;
+                        let eval = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        minEval = Math.min(minEval, eval);
+                    }
+                }
+                return minEval;
+            }
+        }
+    </script>
+</body>
+</html>
